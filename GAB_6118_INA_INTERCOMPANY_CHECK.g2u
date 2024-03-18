@@ -1,0 +1,177 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.F_Intercompany..Create(BaseForm)
+Gui.F_Intercompany..Caption("Intercompany Events XRef Check")
+Gui.F_Intercompany..Size(12360,9690)
+Gui.F_Intercompany..MinX(0)
+Gui.F_Intercompany..MinY(0)
+Gui.F_Intercompany..Position(0,0)
+Gui.F_Intercompany..FontSize(9)
+Gui.F_Intercompany..BackColor(-2147483633)
+Gui.F_Intercompany..MousePointer(0)
+Gui.F_Intercompany..Event(UnLoad,Unload)
+Gui.F_Intercompany..AlwaysOnTop(False)
+Gui.F_Intercompany..FontName("Tahoma")
+Gui.F_Intercompany..ControlBox(True)
+Gui.F_Intercompany..MaxButton(True)
+Gui.F_Intercompany..MinButton(True)
+Gui.F_Intercompany..Moveable(True)
+Gui.F_Intercompany..Sizeable(True)
+Gui.F_Intercompany..ShowInTaskBar(True)
+Gui.F_Intercompany..TitleBar(True)
+Gui.F_Intercompany.lbl1.Create(Label,"Origin",True,780,255,0,165,225,True,0,"Arial",9,-2147483633,0,0)
+Gui.F_Intercompany.lbl1.BorderStyle(0)
+Gui.F_Intercompany.ddlOrig.Create(DropDownList)
+Gui.F_Intercompany.ddlOrig.Size(1035,300)
+Gui.F_Intercompany.ddlOrig.Position(195,435)
+Gui.F_Intercompany.ddlOrig.FontSize(9)
+Gui.F_Intercompany.ddlOrig.Enabled(True)
+Gui.F_Intercompany.ddlOrig.Visible(True)
+Gui.F_Intercompany.ddlOrig.Zorder(0)
+Gui.F_Intercompany.ddlOrig.FontName("Tahoma")
+Gui.F_Intercompany.ddlOrig.Event(SelectedIndexChanged,ddlOrig_Click)
+Gui.F_Intercompany.lbl2.Create(Label,"Destination",True,1185,255,0,1650,225,True,0,"Arial",9,-2147483633,0,0)
+Gui.F_Intercompany.lbl2.BorderStyle(0)
+Gui.F_Intercompany.frame1.Create(Frame)
+Gui.F_Intercompany.frame1.Size(11820,8145)
+Gui.F_Intercompany.frame1.Position(180,945)
+Gui.F_Intercompany.frame1.Caption("Events with No Link")
+Gui.F_Intercompany.frame1.FontSize(9)
+Gui.F_Intercompany.frame1.Enabled(True)
+Gui.F_Intercompany.frame1.Visible(True)
+Gui.F_Intercompany.frame1.Zorder(0)
+Gui.F_Intercompany.frame1.FontName("Tahoma")
+Gui.F_Intercompany.GsGCLink.Create(GsGridControl)
+Gui.F_Intercompany.GsGCLink.Size(11610,7755)
+Gui.F_Intercompany.GsGCLink.Position(120,285)
+Gui.F_Intercompany.GsGCLink.Parent("frame1")
+Gui.F_Intercompany.GsGCLink.Enabled(True)
+Gui.F_Intercompany.GsGCLink.Visible(True)
+Gui.F_Intercompany.GsGCLink.Zorder(0)
+Gui.F_Intercompany.cmdRefresh.Create(Button)
+Gui.F_Intercompany.cmdRefresh.Size(1500,615)
+Gui.F_Intercompany.cmdRefresh.Position(3135,180)
+Gui.F_Intercompany.cmdRefresh.Caption("REFRESH")
+Gui.F_Intercompany.cmdRefresh.FontSize(9)
+Gui.F_Intercompany.cmdRefresh.Event(Click,cmdRefresh_Click)
+Gui.F_Intercompany.cmdRefresh.Enabled(True)
+Gui.F_Intercompany.cmdRefresh.Visible(True)
+Gui.F_Intercompany.cmdRefresh.Zorder(0)
+Gui.F_Intercompany.cmdRefresh.FontName("Tahoma")
+Gui.F_Intercompany.txtDest.Create(TextBox,"",True,975,315,0,1680,450,True,2,"Arial",9,-2147483643,1)
+Gui.F_Intercompany.txtDest.Locked(True)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.sCustomer.Declare
+V.Global.sVendor.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.sIconPath.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.Concat(V.Caller.PluginsDir,"\GAB\GAS\gss2.ico",V.Local.sIconPath)
+Gui.F_Intercompany..Icon(V.Local.sIconPath)
+
+Gui.F_Intercompany.cmdRefresh.Enabled(False)
+F.Data.DataTable.CreateFromSQL("dtCCC","conx","select orgn_cmpny as Origin, orgn_vendor as Vendor, dest_cmpny as Destination, dest_cust_no as Customer from v_intercmpny_xref order by orgn_cmpny",True)
+F.Intrinsic.Control.If(V.DataTable.dtCCC.RowCount,>,0)
+	Gui.F_Intercompany.ddlOrig.AddItems("DataTable","dtCCC","Origin","Origin")
+F.Intrinsic.Control.Else
+	F.Intrinsic.UI.Msgbox("No intercompany xref has been setup","Intercompany Events Xref Check")
+	F.Intrinsic.Control.CallSub(unload)
+F.Intrinsic.Control.EndIf
+
+Gui.F_Intercompany..Show
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.If(V.DataTable.dtXref.Exists,=,True)
+	F.Data.DataTable.Close("dtXref")
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.Close("dtCCC")
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.ddlOrig_Click.Start
+V.Local.i1.Declare
+V.Local.sCCC.Declare
+V.Local.sFilter.Declare
+V.Local.sRet.Declare
+
+'Load destination company based on the selected origin company
+V.Local.sCCC.Set(V.Screen.F_Intercompany!ddlOrig.Text)
+F.Intrinsic.String.Build("Origin = '{0}'",V.Local.sCCC.Trim,V.Local.sFilter)
+F.Data.DataTable.Select("dtCCC",V.Local.sFilter,V.Local.sRet)
+F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+Gui.F_Intercompany.txtDest.Text(V.DataTable.dtCCC(V.Local.sRet(0)).Destination!FieldValTrim)
+Gui.F_Intercompany.cmdRefresh.Enabled(True)
+Program.Sub.ddlOrig_Click.End
+
+Program.Sub.cmdRefresh_Click.Start
+V.Local.i1.Declare
+V.Local.i2.Declare
+V.Local.sCustomerPO.Declare
+V.Local.sDest.Declare
+V.Local.sDSN.Declare
+V.Local.sFilter.Declare
+V.Local.sOrig.Declare
+V.Local.sRet.Declare
+V.Local.sSQL.Declare
+
+F.Intrinsic.UI.InvokeWaitDialog("Retrieving intercompany event data","Intercompany Events Xref Check")
+gui.F_Intercompany.GsGCLink.Visible(False)
+V.Local.sOrig.Set(V.Screen.F_Intercompany!ddlOrig.Text)
+V.Local.sDest.Set(V.Screen.F_Intercompany!txtDest.Text)
+F.Intrinsic.String.Build("Origin = '{0}'",V.Local.sOrig.Trim,V.Local.sRet)
+F.Data.DataTable.Select("dtCCC",V.Local.sFilter,V.Local.sRet)
+F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+
+F.Intrinsic.String.Build("GLOBAL_{0}",V.Local.sOrig.Trim,V.Local.sDSN)
+F.ODBC.Connection!Con1.OpenConnection(V.Local.sDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.String.Build("GLOBAL_{0}",V.Local.sDest.Trim,V.Local.sDSN)
+F.ODBC.Connection!Con2.OpenConnection(V.Local.sDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.String.Build("select p1.purchase_order as PO from v_po_header p1 left join v_intcmp_so_evnt p2 on p1.purchase_order = p2.po_no where p1.vendor = '{0}' and p2.po_no is null order by purchase_order",V.DataTable.dtCCC(V.Local.sRet(0)).Vendor!FieldValTrim,V.Local.sSQL)
+F.Intrinsic.Control.If(V.DataTable.dtXref.Exists,=,True)
+	F.Data.DataTable.Close("dtXref")
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.CreateFromSQL("dtXref","Con1",V.Local.sSQL,True)
+F.Data.DataTable.AddColumn("dtXref","SO","String")
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtXref.RowCount--,1)
+	F.Intrinsic.Math.Add(V.Local.i1,1,V.Local.i2)
+	F.Intrinsic.UI.ChangeWaitStatus("Retrieving intercompany event data",V.Local.i2,1,V.DataTable.dtXref.RowCount)
+	F.Intrinsic.String.Build("{0}/{1}",V.DataTable.dtXref(V.Local.i1).PO!FieldValTrim,V.DataTable.dtCCC(V.Local.sRet(0)).Vendor!FieldValTrim,V.Local.sCustomerPO)
+	F.Intrinsic.String.Build("select order_no from v_order_header where customer = '{0}' and customer_po = '{1}'",V.DataTable.dtCCC(V.Local.sRet(0)).Customer!FieldValTrim,V.Local.sCustomerPO.Trim,V.Local.sSQL)
+	F.ODBC.Connection!Con2.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.Con2!rst.EOF,=,True)
+		F.Data.DataTable.SetValue("dtXref",V.Local.i1,"SO","N/A")
+	F.Intrinsic.Control.Else
+		F.Data.DataTable.SetValue("dtXref",V.Local.i1,"SO",V.ODBC.Con2!rst.FieldValTrim!order_no)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Con2!rst.Close
+F.Intrinsic.Control.Next(V.Local.i1)
+F.ODBC.Connection!Con2.Close
+F.ODBC.Connection!Con1.Close
+Gui.F_Intercompany.GsGCLink.AddGridviewFromDatatable("gvLink","dtXref")
+Gui.F_Intercompany.GsGCLink.MainView("gvLink")
+F.Intrinsic.String.Build("PO at {0}",V.Local.sOrig,V.Local.sRet)
+Gui.F_Intercompany.GsGCLink.SetColumnProperty("gvLink","PO","Caption",V.Local.sRet)
+F.Intrinsic.String.Build("SO at {0}",V.Local.sDest,V.Local.sRet)
+Gui.F_Intercompany.GsGCLink.SetColumnProperty("gvLink","SO","Caption",V.Local.sRet)
+Gui.F_Intercompany.GsGCLink.SetColumnProperty("gvLink","PO","HeaderHAlignment","Center")
+Gui.F_Intercompany.GsGCLink.SetColumnProperty("gvLink","SO","HeaderHAlignment","Center")
+Gui.F_Intercompany.GsGCLink.SetColumnProperty("gvLink","PO","CellHAlignment","Center")
+Gui.F_Intercompany.GsGCLink.SetColumnProperty("gvLink","SO","CellHAlignment","Center")
+gui.F_Intercompany.GsGCLink.Visible(True)
+F.Intrinsic.UI.CloseWaitDialog
+Program.Sub.cmdRefresh_Click.End
+
+Program.Sub.Comments.Start
+${$0$}$Intercompany Event Reference Check$}$MHERTANTO$}$22/5/2017 5:08:38 PM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$Update ORDER_SUFFIX in PRT_LASER_INVOICE for line item when an invoice comprises of multiple shipments.
+${$5$}$2.0.0.0$}$2
+${$6$}$tdjohan$}$20200925160109627$}$8rAQhOSvlohpQhMDm1j544LwmwXnRbkhjDhFkKDofa+duqoKjLqXci/6Iy+fmPYtroAGWefqJ0w=
+Program.Sub.Comments.End
